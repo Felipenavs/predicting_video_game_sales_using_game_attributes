@@ -169,3 +169,57 @@ def cat_sales_bar(col, label, top_n, filename, figsize=(10, 5)):
 cat_sales_bar("genre",    "Genre",    12, "04_sales_by_genre.png")
 cat_sales_bar("platform", "Platform", 15, "05_sales_by_platform.png")
 cat_sales_bar("esrb",     "ESRB Rating", 8, "06_sales_by_esrb.png", figsize=(8, 4))
+
+# ══════════════════════════════════════════════════════════════════════════════
+# top 10 publishers by total sales
+# ══════════════════════════════════════════════════════════════════════════════
+top_publishers = (
+    df.groupby("publisher")["sales_global"]
+      .sum()
+      .sort_values(ascending=False)
+      .head(10)
+)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+colors = sns.color_palette(PALETTE, len(top_publishers))
+bars = ax.bar(top_publishers.index, top_publishers.values, color=colors)
+ax.bar_label(bars, fmt="%.0f M", padding=3, fontsize=8)
+ax.set_title("Top 10 publishers by total global sales")
+ax.set_ylabel("Total Sales (M)")
+plt.xticks(rotation=35, ha="right")
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "07_top_publishers.png")
+plt.show()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# sales and releases over time
+# ══════════════════════════════════════════════════════════════════════════════
+yearly = (
+    df.dropna(subset=["year"])
+      .groupby("year")["sales_global"]
+      .agg(total="sum", count="count")
+      .loc[1980:2016]  # trim outlier years
+)
+
+fig, ax1 = plt.subplots(figsize=(12, 4))
+ax2 = ax1.twinx()
+
+ax1.fill_between(yearly.index, yearly["total"],
+                 alpha=0.4, color="#5B8DB8", label="Total sales (M)")
+ax1.plot(yearly.index, yearly["total"], color="#5B8DB8", linewidth=2)
+ax2.plot(yearly.index, yearly["count"], color="#E07B54",
+         linewidth=2, linestyle="--", label="# of titles")
+
+ax1.set_xlabel("Year")
+ax1.set_ylabel("Total Global Sales (M)", color="#5B8DB8")
+ax2.set_ylabel("Number of Titles Released", color="#E07B54")
+ax1.set_title("Video game sales and releases over time")
+
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper left", fontsize=9)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "08_sales_over_time.png")
+plt.show()
+
