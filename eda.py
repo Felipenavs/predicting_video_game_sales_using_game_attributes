@@ -223,3 +223,107 @@ plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "08_sales_over_time.png")
 plt.show()
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Review scores vs sales 
+# ══════════════════════════════════════════════════════════════════════════════
+scored = df.dropna(subset=["critic_score", "user_score", "sales_global"]).copy()
+scored["log_sales"] = np.log1p(scored["sales_global"])
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+axes[0].scatter(scored["critic_score"], scored["log_sales"],
+                alpha=0.25, s=12, color="#5B8DB8")
+m, b = np.polyfit(scored["critic_score"], scored["log_sales"], 1)
+x_line = np.linspace(scored["critic_score"].min(), scored["critic_score"].max(), 100)
+axes[0].plot(x_line, m * x_line + b, color="crimson", linewidth=1.5)
+axes[0].set_title("Critic score vs log(Global Sales)")
+axes[0].set_xlabel("Critic Score (0–100)")
+axes[0].set_ylabel("log(1 + Sales)")
+corr_c = scored["critic_score"].corr(scored["log_sales"])
+axes[0].annotate(f"r = {corr_c:.3f}", xy=(0.05, 0.92),
+                 xycoords="axes fraction", fontsize=10, color="crimson")
+
+axes[1].scatter(scored["user_score"], scored["log_sales"],
+                alpha=0.25, s=12, color="#E07B54")
+m2, b2 = np.polyfit(scored["user_score"], scored["log_sales"], 1)
+x_line2 = np.linspace(scored["user_score"].min(), scored["user_score"].max(), 100)
+axes[1].plot(x_line2, m2 * x_line2 + b2, color="crimson", linewidth=1.5)
+axes[1].set_title("User score vs log(Global Sales)")
+axes[1].set_xlabel("User Score (0–10)")
+axes[1].set_ylabel("log(1 + Sales)")
+corr_u = scored["user_score"].corr(scored["log_sales"])
+axes[1].annotate(f"r = {corr_u:.3f}", xy=(0.05, 0.92),
+                 xycoords="axes fraction", fontsize=10, color="crimson")
+
+plt.suptitle("Review scores vs sales (complete-case subset, n={:,})".format(len(scored)),
+             fontsize=13)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "09_scores_vs_sales.png", bbox_inches="tight")
+plt.show()
+print(f"Critic score correlation with log_sales : {corr_c:.3f}")
+print(f"User score  correlation with log_sales  : {corr_u:.3f}")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Correlation matrix of numeric features
+# ══════════════════════════════════════════════════════════════════════════════
+num_cols = ["sales_global", "sales_na", "sales_eu", "sales_jp", "sales_other",
+            "critic_score", "critic_count", "user_score", "user_count", "year"]
+num_cols = [c for c in num_cols if c in df.columns]
+
+corr_matrix = df[num_cols].corr()
+
+fig, ax = plt.subplots(figsize=(10, 8))
+mask = np.triu(np.ones_like(corr_matrix, dtype=bool))  # upper triangle mask
+sns.heatmap(
+    corr_matrix, mask=mask, annot=True, fmt=".2f",
+    cmap="RdBu_r", center=0, vmin=-1, vmax=1,
+    linewidths=0.5, ax=ax, annot_kws={"size": 8}
+)
+ax.set_title("Correlation matrix — numeric features")
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "10_correlation_heatmap.png")
+plt.show()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# high critic score but low sales 
+# ══════════════════════════════════════════════════════════════════════════════
+# Define: high critic score (≥85) but bottom 25% of sales
+high_score_threshold = 85
+low_sales_threshold  = df["sales_global"].quantile(0.25)
+
+critically_acclaimed = df[df["critic_score"] >= high_score_threshold].copy()
+underperformers = critically_acclaimed[
+    critically_acclaimed["sales_global"] <= low_sales_threshold
+].sort_values("critic_score", ascending=False)
+
+print("── Critically acclaimed but commercially underperforming games ──")
+print(f"High critic score threshold : ≥ {high_score_threshold}")
+print(f"Low sales threshold (Q1)    : ≤ {low_sales_threshold:.2f} M")
+print(f"Games in this category      : {len(underperformers)}\n")
+print(underperformers[["title", "platform", "genre", "publisher",
+                        "critic_score", "sales_global"]].head(20).to_string(index=False))
+
+# Scatter highlighting underperformers
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.scatter(df["critic_score"], df["sales_global"],
+           alpha=0.2, s=10, color="#AAAAAA", label="All games")
+ax.scatter(underperformers["critic_score"], underperformers["sales_global"],
+           alpha=0.7, s=20, color="#E07B54",
+           label=f"High score / low sales (n={len(underperformers)})")
+
+ax.axvline(high_score_threshold, color="steelblue",
+           linewidth=1, linestyle="--", alpha=0.7)
+ax.axhline(low_sales_threshold, color="steelblue",
+           linewidth=1, linestyle="--", alpha=0.7)
+ax.set_xlim(0, 105)
+ax.set_ylim(-0.1, df["sales_global"].quantile(0.995))
+ax.set_xlabel("Critic Score")
+ax.set_ylabel("Global Sales (M)")
+ax.set_title("Critically acclaimed games that underperformed commercially")
+ax.legend(fontsize=9)
+plt.tight_layout()
+plt.savefig(OUTPUT_DIR / "11_acclaimed_underperformers.png")
+plt.show()
+
+
