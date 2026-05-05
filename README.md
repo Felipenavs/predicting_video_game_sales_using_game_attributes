@@ -8,19 +8,6 @@ A Data Science project that predicts global video game sales from attributes suc
 
 ---
 
-## Dataset
-
-This project uses the **Video Game Sales with Ratings** dataset compiled by Rush Kirubi on Kaggle.
-
-1. Go to: https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings
-2. Sign in with a free Kaggle account
-3. Click **Download**
-4. create a `data/` folder in the project root.
-5. Extract the downloaded zip file into the `data/` folder
-6. Rename it to exactly: `Video_Games_Sales_as_at_22_Dec_2016.csv`
-
----
-
 ## Setup
 
 Make sure you have **Python 3.8+** installed, then:
@@ -38,6 +25,20 @@ venv\Scripts\activate           # Windows
 # 3. Install dependencies
 pip install -r requirements.txt
 ```
+
+---
+
+## Dataset
+
+This project uses the **Video Game Sales with Ratings** dataset compiled by Rush Kirubi on Kaggle.
+
+1. Go to: https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings
+2. Sign in with a free Kaggle account
+3. Click **Download**
+4. create a `data/` folder in the project root.
+5. Extract the downloaded zip file into the `data/` folder
+6. Rename it to exactly: `Video_Games_Sales_as_at_22_Dec_2016.csv`
+
 ---
 
 ## Running the Code
@@ -59,7 +60,7 @@ Cleans the dataset and creates the train/test files in data/
 python preprocessing.py
 ```
 
-**Model training and evaluation**
+**3. Model training and evaluation**
 
 Trains the regression models, saves evaluation figures in figures/, and saves model files in models/
 
